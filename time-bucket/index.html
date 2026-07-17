@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#5e86ae">
+<link rel="manifest" href="./manifest.json">
+<link rel="apple-touch-icon" href="./icon-192.png">
+<link rel="icon" type="image/png" href="./icon-192.png">
+<meta name="apple-mobile-web-app-title" content="タイムバケット">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>夫婦のタイムバケット</title>
+<style>
+  :root {
+    --bg: #faf6f0; --card: #ffffff; --text: #3d3a4e; --sub: #8a86a0;
+    --accent: #cd7d5e; --accent-light: #f3ddd3; --border: #eee7dd; --ok: #7daf7d;
+    --wife: #c96f6f; --wife-bg: #f9ebeb; --husband: #5e86ae; --husband-bg: #e8eff6;
+    --both: #5f9560; --both-bg: #e9f2e6;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+    background: var(--bg); color: var(--text); line-height: 1.6; padding-bottom: 50px; }
+  .wrap { max-width: 680px; margin: 0 auto; padding: 16px 14px; }
+  h1 { font-size: 20px; margin-bottom: 4px; }
+  .help { font-size: 12.5px; color: var(--sub); margin-bottom: 12px; }
+  .tabs { display: flex; gap: 6px; margin-bottom: 14px; }
+  .tab { flex: 1; padding: 10px 4px; border-radius: 12px; border: 1.5px solid var(--border);
+    background: #fff; font-size: 13px; font-weight: 700; color: var(--sub); cursor: pointer; font-family: inherit; }
+  .tab.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .card { background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; margin-bottom: 12px; }
+  .card h3 { font-size: 14px; margin-bottom: 6px; }
+  .who-row { display: flex; gap: 8px; margin-bottom: 12px; }
+  .who-btn { flex: 1; padding: 9px; border-radius: 20px; border: 1.5px solid var(--border);
+    background: #fff; font-size: 14px; font-weight: 600; color: var(--sub); cursor: pointer; font-family: inherit; }
+  .who-btn.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .progress-row { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+  .progress-track { flex: 1; height: 8px; background: var(--border); border-radius: 4px; }
+  .progress-bar { height: 100%; background: var(--accent); border-radius: 4px; width: 0; transition: width .3s; }
+  .count { font-size: 15px; font-weight: 700; color: var(--accent); white-space: nowrap; }
+  .cheer { font-size: 12px; color: var(--sub); margin-bottom: 10px; min-height: 18px; }
+  .input-row { display: flex; gap: 8px; margin-bottom: 10px; }
+  input[type=text] { flex: 1; padding: 12px 14px; border: 1.5px solid var(--border);
+    border-radius: 12px; font-size: 16px; font-family: inherit; background: #fff; min-width: 0; }
+  input[type=text]:focus { outline: none; border-color: var(--accent); }
+  textarea { width: 100%; padding: 10px 12px; border: 1.5px solid var(--border); border-radius: 10px;
+    font-size: 13px; font-family: inherit; min-height: 80px; }
+  .add-btn { padding: 0 20px; border: none; border-radius: 12px; background: var(--accent);
+    color: #fff; font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+  .chip { padding: 5px 12px; border-radius: 14px; border: 1.5px solid var(--border);
+    background: #fff; font-size: 12px; color: var(--sub); cursor: pointer; font-family: inherit; }
+  .chip.on { background: var(--accent-light); border-color: var(--accent); color: var(--accent); }
+  .hint { font-size: 12.5px; color: var(--accent); background: var(--accent-light);
+    border-radius: 10px; padding: 8px 12px; margin-bottom: 10px; display: none; }
+  ul.items { list-style: none; margin-top: 6px; }
+  ul.items li { display: flex; align-items: center; gap: 8px; background: #fff;
+    border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; margin-bottom: 6px; font-size: 14px; }
+  ul.items li .no { color: var(--sub); font-size: 12px; min-width: 20px; }
+  ul.items li .txt { flex: 1; word-break: break-word; }
+  ul.items li .del { border: none; background: none; color: var(--sub); font-size: 16px; cursor: pointer; padding: 2px 6px; }
+  .a-btn { width: 100%; border: none; border-radius: 24px; padding: 12px; font-size: 14.5px;
+    font-weight: 700; font-family: inherit; cursor: pointer; margin-bottom: 8px; }
+  .a-copy { background: var(--accent); color: #fff; }
+  .a-copy.copied { background: var(--ok); }
+  .a-sub { background: #fff; color: var(--accent); border: 1.5px solid var(--accent); }
+  .send-note { font-size: 12.5px; color: var(--sub); text-align: center; margin-bottom: 8px; }
+  .autosave { font-size: 11px; color: var(--sub); text-align: right; margin-top: 4px; }
+  .owner { font-size: 11px; font-weight: 700; border-radius: 10px; padding: 2px 8px; white-space: nowrap; }
+  .o-夫 { background: var(--husband-bg); color: var(--husband); }
+  .o-妻 { background: var(--wife-bg); color: var(--wife); }
+  .o-共通 { background: var(--both-bg); color: var(--both); }
+  .m-item { background: #fff; border: 1px solid var(--border); border-radius: 12px;
+    padding: 10px 12px; margin-bottom: 8px; }
+  .m-top { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+  .m-top .txt { flex: 1; font-size: 14px; word-break: break-word; }
+  .m-top .del { border: none; background: none; color: var(--sub); font-size: 16px; cursor: pointer; padding: 2px 6px; }
+  .m-chips { display: flex; flex-wrap: wrap; gap: 4px; }
+  .m-chips .lbl { font-size: 11px; color: var(--sub); align-self: center; margin-right: 2px; }
+  .s-chip { padding: 4px 10px; border-radius: 12px; border: 1.5px solid var(--border);
+    background: #fff; font-size: 12px; color: var(--sub); cursor: pointer; font-family: inherit; }
+  .s-chip.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .s-chip.s-diff.on { background: #5f9560; border-color: #5f9560; color: #fff; }
+  .s-chip.s-cost.on { background: #7a5ea8; border-color: #7a5ea8; color: #fff; }
+  .s-chip.s-when.on { background: #5e86ae; border-color: #5e86ae; color: #fff; }
+  .filters { display: flex; gap: 6px; margin-bottom: 10px; flex-wrap: wrap; }
+  .stat { font-size: 12.5px; color: var(--sub); margin-bottom: 8px; }
+  .bucket-group { margin-bottom: 14px; }
+  .bucket-group h4 { font-size: 14px; color: var(--accent); border-bottom: 2px solid var(--accent-light);
+    padding-bottom: 4px; margin-bottom: 6px; }
+  .b-row { display: flex; align-items: center; gap: 8px; padding: 5px 2px; font-size: 13.5px; }
+  .diff-b { font-size: 10.5px; font-weight: 700; border-radius: 8px; padding: 1px 7px; }
+  .d-小 { background: #eef3ee; color: var(--both); }
+  .d-中 { background: #f9efd9; color: #c28a1e; }
+  .d-大 { background: #f8e3e0; color: #c05555; }
+  .cost-b { background: #efeaf7; color: #7a5ea8; }
+  .b-row .chk { width: 16px; height: 16px; accent-color: var(--ok); flex-shrink: 0; }
+  .done-t { text-decoration: line-through; color: var(--sub); }
+  .memo-inp { width: 100%; margin-top: 6px; padding: 6px 10px; font-size: 12px;
+    border: 1px solid var(--border); border-radius: 8px; font-family: inherit; }
+  .memo-inp:focus { outline: none; border-color: var(--accent); }
+  .memo-t { font-size: 12px; color: var(--sub); margin: 0 0 4px 24px; word-break: break-all; }
+  .memo-t a { color: var(--husband); }
+  .cat-b { font-size: 10.5px; font-weight: 600; background: #f3ede4; color: #8a7a5e;
+    border-radius: 8px; padding: 1px 7px; white-space: nowrap; }
+  .c-行きたい場所 { background: #e8eff6; color: #5e86ae; }
+  .c-食べたい { background: #fbe9da; color: #c07a3a; }
+  .c-経験・体験 { background: #e9f2e6; color: #5f9560; }
+  .c-学び・スキル { background: #efeaf7; color: #7a5ea8; }
+  .c-買いたい { background: #f9ebeb; color: #c96f6f; }
+  .c-夫婦・家族 { background: #f3ddd3; color: #b56a4a; }
+  .c-仕事・お金 { background: #e0efee; color: #3f8e88; }
+  .c-健康・体 { background: #eef3da; color: #87933b; }
+  .c-小さな楽しみ { background: #f9efd9; color: #c28a1e; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>夫婦のタイムバケット</h1>
+  <p class="help">①やりたいことを各自50個書き出す → ②③ふたりでリストを合体して、難易度と「何歳までに」を振り分ける</p>
+
+  <div class="tabs">
+    <button class="tab on" id="tab1" onclick="showTab(1)">① 書き出し(各自)</button>
+    <button class="tab" id="tab2" onclick="showTab(2)">②③ ふたりで整理</button>
+  </div>
+
+  <!-- ========== TAB1: 書き出し ========== -->
+  <div id="pane1">
+    <div class="who-row">
+      <button class="who-btn" id="who_夫" onclick="setWho('夫')">夫</button>
+      <button class="who-btn" id="who_妻" onclick="setWho('妻')">妻</button>
+    </div>
+    <div class="progress-row">
+      <div class="progress-track"><div class="progress-bar" id="bar"></div></div>
+      <div class="count" id="count">0 / 50</div>
+    </div>
+    <div class="cheer" id="cheer">まずは「夫」か「妻」を選んでください</div>
+    <p class="help" style="margin-bottom:6px">カテゴリを選んでから追加すると、項目にカテゴリが付きます(選ばなくてもOK)</p>
+    <div class="chips" id="chips"></div>
+    <div class="hint" id="hint"></div>
+    <div class="input-row">
+      <input type="text" id="inp" placeholder="やりたいことを入力" onkeydown="if(event.key==='Enter'){addItem();}">
+      <button class="add-btn" onclick="addItem()">追加</button>
+    </div>
+    <ul class="items" id="list"></ul>
+    <div class="autosave" id="saveNote"></div>
+    <div style="margin-top:14px">
+      <button class="a-btn a-copy" id="copyBtn" onclick="copyList()">📋 リストをコピーする</button>
+      <p class="send-note">コピーしたらメールかLINEでパートナーへ送ってください。<br>ふたりで整理する日は、整理役のスマホの「②③」タブに貼り付けます</p>
+    </div>
+  </div>
+
+  <!-- ========== TAB2: ふたりで整理 ========== -->
+  <div id="pane2" style="display:none">
+    <div class="card">
+      <h3>リストを集める</h3>
+      <p class="help" style="margin-bottom:8px">このスマホの①で書いた分は自動で入ります(<span id="localCounts"></span>)。相手のリストは、送ってもらったテキストを下に貼り付けて読み込んでください。</p>
+      <textarea id="pasteBox" placeholder="【やりたいことリスト50】&#10;回答者: 夫&#10;1. 〜〜&#10;2. 〜〜 …をそのまま貼り付け"></textarea>
+      <div style="display:flex; gap:6px; margin-top:8px">
+        <button class="a-btn a-sub" style="margin:0" onclick="importPaste()">貼り付けた内容を読み込む</button>
+      </div>
+      <div class="stat" id="importNote" style="margin-top:6px"></div>
+      <button class="a-btn a-copy" style="margin-top:10px" onclick="mergeLists()">🔀 ふたりのリストを合体する</button>
+    </div>
+
+    <div id="mergeArea" style="display:none">
+      <div class="stat" id="mergeStat"></div>
+      <div class="card">
+        <h3>あとから追加</h3>
+        <div class="input-row" style="margin-bottom:6px">
+          <input type="text" id="inpM" placeholder="思いついたやりたいことを入力" onkeydown="if(event.key==='Enter'){addMerged();}">
+          <button class="add-btn" onclick="addMerged()">追加</button>
+        </div>
+        <div class="m-chips"><span class="lbl">だれの?</span>
+          <button class="s-chip on" id="mo_共通" onclick="setMOwner('共通')">共通</button>
+          <button class="s-chip" id="mo_夫" onclick="setMOwner('夫')">夫</button>
+          <button class="s-chip" id="mo_妻" onclick="setMOwner('妻')">妻</button>
+        </div>
+      </div>
+      <div class="filters" id="filterRow">
+        <button class="chip on" onclick="setFilter('all', this)">すべて</button>
+        <button class="chip" onclick="setFilter('todo', this)">未分類だけ</button>
+        <button class="chip" onclick="setFilter('both', this)">共通だけ</button>
+      </div>
+      <div id="mergedList"></div>
+      <button class="a-btn a-sub" onclick="showTable()">📊 タイムバケット表を見る</button>
+      <div id="tableArea" style="display:none">
+        <div id="bucketTable" class="card"></div>
+        <button class="a-btn a-copy" id="copyBtn2" onclick="copyTable()">📋 バケット表をコピーする</button>
+        <button class="a-btn a-sub" id="copyBtn3" onclick="copyTSV()">📄 スプシ用にコピー(貼り付けで表になります)</button>
+        <p class="send-note">コピーしてメールかLINEで共有すれば、整理レポートも作れます</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+
+const CATS = {
+  "行きたい場所": "例: 一度は見たい絶景 / 行ってみたい国・県 / 泊まりたい宿",
+  "食べたい": "例: 憧れの名店 / ご当地グルメ / 高級食材を家で",
+  "経験・体験": "例: やったことないアクティビティ / 乗ってみたい乗り物 / 観たいライブ",
+  "学び・スキル": "例: 取りたい資格 / 習い事 / 読みたい本",
+  "買いたい": "例: いつか欲しいもの / 家に置きたいもの",
+  "夫婦・家族": "例: 二人の記念日にしたいこと / 家族でやりたいこと / 親孝行",
+  "仕事・お金": "例: 仕事で達成したいこと / 貯金・投資の目標",
+  "健康・体": "例: 挑戦したい運動 / 体のメンテナンス",
+  "小さな楽しみ": "例: 気になってた近所の店 / 今度の休みにできること"
+};
+const DIFFS = ["小", "中", "大"];
+const WHENS = ["〜40歳", "〜45歳", "〜50歳", "〜55歳", "〜60歳", "〜65歳", "65歳〜"];
+const COSTS = ["〜1万", "〜5万", "〜10万", "〜30万", "〜50万", "50万〜"];
+
+let who = "";
+let items = [];
+let curCat = "";
+let merged = [];   // {t, own, diff, when}
+let filter = "all";
+
+/* ---------- 共通 ---------- */
+function esc(s) {
+  return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+function lsGet(k) { try { return localStorage.getItem(k); } catch(e) { return null; } }
+function lsSet(k, v) { try { localStorage.setItem(k, v); return true; } catch(e) { return false; } }
+function getSide(w) { const raw = lsGet("bucket50_" + w); try { return normItems(raw ? JSON.parse(raw) : []); } catch(e) { return []; } }
+function normItems(arr) { return arr.map(x => typeof x === "string" ? {t: x, cat: ""} : x); }
+
+function showTab(n) {
+  document.getElementById("tab1").classList.toggle("on", n === 1);
+  document.getElementById("tab2").classList.toggle("on", n === 2);
+  document.getElementById("pane1").style.display = n === 1 ? "" : "none";
+  document.getElementById("pane2").style.display = n === 2 ? "" : "none";
+  if (n === 2) refreshLocalCounts();
+}
+
+/* ---------- ① 書き出し ---------- */
+function setWho(w) {
+  who = w;
+  document.querySelectorAll(".who-btn").forEach(b => b.classList.remove("on"));
+  document.getElementById("who_" + w).classList.add("on");
+  items = getSide(w);
+  renderList();
+}
+function saveNow() {
+  if (!who) return;
+  const ok = lsSet("bucket50_" + who, JSON.stringify(items));
+  document.getElementById("saveNote").textContent = ok
+    ? "自動保存済み " + new Date().toLocaleTimeString("ja-JP", {hour:"2-digit", minute:"2-digit"})
+    : "※この端末では自動保存が使えません。こまめにコピーしてください";
+}
+function addItem() {
+  if (!who) { alert("先に「夫」か「妻」を選んでください"); return; }
+  const inp = document.getElementById("inp");
+  const v = inp.value.trim();
+  if (!v) return;
+  items.push({t: v, cat: curCat}); inp.value = ""; inp.focus();
+  saveNow(); renderList();
+}
+function delItem(i) { items.splice(i, 1); saveNow(); renderList(); }
+function cheerMsg(n) {
+  if (!who) return "まずは「夫」か「妻」を選んでください";
+  if (n === 0) return "まずは思いつくままに!";
+  if (n < 10) return "いい調子!出だし好調です";
+  if (n < 20) return "10個突破!カテゴリのボタンを押すとヒントが出ます";
+  if (n < 30) return "20個超え!小さいネタも忘れずに";
+  if (n < 40) return "30個超え!折り返し地点は過ぎました";
+  if (n < 50) return "あと少し!ラストスパート";
+  return "50個達成!!🎉 コピーして送りましょう(もっと書いてもOK)";
+}
+function renderList() {
+  document.getElementById("list").innerHTML = items.map((it, i) =>
+    `<li><span class="no">${i + 1}.</span>${it.cat ? `<span class="cat-b c-${esc(it.cat)}">${esc(it.cat)}</span>` : ""}<span class="txt">${esc(it.t)}</span><button class="del" onclick="delItem(${i})">✕</button></li>`
+  ).join("");
+  const n = items.length;
+  document.getElementById("count").textContent = n + " / 50";
+  document.getElementById("bar").style.width = Math.min(100, n / 50 * 100) + "%";
+  document.getElementById("cheer").textContent = cheerMsg(n);
+}
+function buildChips() {
+  document.getElementById("chips").innerHTML = Object.keys(CATS).map(c =>
+    `<button class="chip" onclick="showHint('${c}', this)">${c}</button>`).join("");
+}
+function showHint(c, el) {
+  const h = document.getElementById("hint");
+  const inp = document.getElementById("inp");
+  const already = el.classList.contains("on");
+  document.querySelectorAll("#chips .chip").forEach(x => x.classList.remove("on"));
+  if (already) { h.style.display = "none"; curCat = ""; inp.placeholder = "やりたいことを入力"; return; }
+  el.classList.add("on"); h.textContent = CATS[c]; h.style.display = "block";
+  curCat = c; inp.placeholder = c + "のやりたいことを入力";
+}
+function buildText() {
+  return `【やりたいことリスト50】\n回答者: ${who || "(未選択)"}\n記入日: ${new Date().toLocaleDateString("ja-JP")}\n合計: ${items.length}個\n\n` +
+    items.map((it, i) => `${i + 1}. ${it.cat ? "[" + it.cat + "] " : ""}${it.t}`).join("\n");
+}
+function copyText(text, btnId) {
+  const done = () => {
+    const b = document.getElementById(btnId);
+    const orig = b.textContent;
+    b.textContent = "✓ コピーしました"; b.classList.add("copied");
+    setTimeout(() => { b.textContent = orig; b.classList.remove("copied"); }, 2500);
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(done).catch(() => fallbackCopy(text, done));
+  } else fallbackCopy(text, done);
+}
+function fallbackCopy(text, done) {
+  const ta = document.createElement("textarea");
+  ta.value = text; document.body.appendChild(ta); ta.select();
+  document.execCommand("copy"); document.body.removeChild(ta); done();
+}
+function copyList() {
+  if (!who) { alert("先に「夫」か「妻」を選んでください"); return; }
+  if (items.length === 0) { alert("まだリストが空です"); return; }
+  copyText(buildText(), "copyBtn");
+}
+
+/* ---------- ②③ ふたりで整理 ---------- */
+function refreshLocalCounts() {
+  document.getElementById("localCounts").textContent =
+    "夫: " + getSide("夫").length + "個 / 妻: " + getSide("妻").length + "個";
+  loadMerged();
+}
+function importPaste() {
+  const raw = document.getElementById("pasteBox").value;
+  if (!raw.trim()) { alert("テキストを貼り付けてください"); return; }
+  const whoM = raw.match(/回答者[::]\s*(夫|妻)/);
+  let side = whoM ? whoM[1] : null;
+  if (!side) side = confirm("「回答者: 夫/妻」が見つかりません。OK=夫のリスト / キャンセル=妻のリスト として読み込みます") ? "夫" : "妻";
+  const lines = raw.split(/\n/).map(l => {
+    const m = l.match(/^\s*\d+[\.、.]?\s*(?:\[([^\]]+)\]\s*)?(.+)$/);
+    return m ? {cat: (m[1] || "").trim(), t: m[2].trim()} : null;
+  }).filter(x => x);
+  if (lines.length === 0) { alert("番号付きの行(1. 〜)が見つかりませんでした"); return; }
+  const cur = getSide(side);
+  const set = new Set(cur.map(x => norm(x.t)));
+  let added = 0;
+  for (const it of lines) { if (!set.has(norm(it.t))) { cur.push(it); set.add(norm(it.t)); added++; } }
+  lsSet("bucket50_" + side, JSON.stringify(cur));
+  document.getElementById("pasteBox").value = "";
+  document.getElementById("importNote").textContent = `${side}のリストとして ${added}個 読み込みました(重複はスキップ)`;
+  refreshLocalCounts();
+}
+function norm(s) { return String(s).toLowerCase().replace(/[\s。、!!??・]/g, ""); }
+
+function mergeLists() {
+  const h = getSide("夫"), w = getSide("妻");
+  if (h.length + w.length === 0) { alert("リストがまだありません。①で書くか、貼り付けで読み込んでください"); return; }
+  if (merged.length > 0 && !confirm("すでに整理中のリストがあります。作り直しますか?(難易度・時期の振り分けは消えます)")) return;
+  merged = [];
+  const wNorm = new Map(w.map(it => [norm(it.t), it]));
+  const usedW = new Set();
+  for (const it of h) {
+    const k = norm(it.t);
+    if (wNorm.has(k)) { merged.push({t: it.t, cat: it.cat || wNorm.get(k).cat || "", own: "共通", diff: "", when: "", cost: "", done: false, memo: ""}); usedW.add(k); }
+    else merged.push({t: it.t, cat: it.cat || "", own: "夫", diff: "", when: "", cost: "", done: false, memo: ""});
+  }
+  for (const it of w) { if (!usedW.has(norm(it.t))) merged.push({t: it.t, cat: it.cat || "", own: "妻", diff: "", when: "", cost: "", done: false, memo: ""}); }
+  merged.sort((a, b) => (a.own === "共通" ? -1 : 1) - (b.own === "共通" ? -1 : 1));
+  saveMerged();
+  const nBoth = merged.filter(x => x.own === "共通").length;
+  document.getElementById("mergeStat").textContent =
+    `全${merged.length}個` + (nBoth ? ` — ふたり共通が${nBoth}個見つかりました!🎉` : "");
+  document.getElementById("mergeArea").style.display = "";
+  renderMerged();
+}
+function saveMerged() { lsSet("bucket50_merged", JSON.stringify(merged)); }
+function loadMerged() {
+  const raw = lsGet("bucket50_merged");
+  if (!raw) return;
+  try { merged = JSON.parse(raw); } catch(e) { return; }
+  merged.forEach(x => { if (x.cost === undefined) x.cost = ""; if (x.done === undefined) x.done = false; if (x.memo === undefined) x.memo = ""; if (x.cat === undefined) x.cat = ""; });
+  if (merged.length) {
+    const nBoth = merged.filter(x => x.own === "共通").length;
+    document.getElementById("mergeStat").textContent =
+      `全${merged.length}個` + (nBoth ? ` — ふたり共通が${nBoth}個` : "");
+    document.getElementById("mergeArea").style.display = "";
+    renderMerged();
+  }
+}
+function setFilter(f, el) {
+  filter = f;
+  document.querySelectorAll("#filterRow .chip").forEach(x => x.classList.remove("on"));
+  el.classList.add("on");
+  renderMerged();
+}
+function renderMerged() {
+  const box = document.getElementById("mergedList");
+  const doneN = merged.filter(x => x.diff && x.when && x.cost).length;
+  let rows = "";
+  merged.forEach((it, i) => {
+    if (filter === "todo" && it.diff && it.when && it.cost) return;
+    if (filter === "both" && it.own !== "共通") return;
+    rows += `<div class="m-item">
+      <div class="m-top"><span class="owner o-${it.own}">${it.own}</span>${it.cat ? `<span class="cat-b c-${esc(it.cat)}">${esc(it.cat)}</span>` : ""}<span class="txt">${esc(it.t)}</span><button class="del" onclick="delMerged(${i})">✕</button></div>
+      <div class="m-chips"><span class="lbl">難易度</span>` +
+      DIFFS.map(d => `<button class="s-chip s-diff${it.diff === d ? " on" : ""}" onclick="setDiff(${i},'${d}')">${d}</button>`).join("") +
+      `<span class="lbl" style="margin-left:8px">お金</span>` +
+      COSTS.map(c => `<button class="s-chip s-cost${it.cost === c ? " on" : ""}" onclick="setCost(${i},'${c}')">${c}</button>`).join("") +
+      `<span class="lbl" style="margin-left:8px">時期</span>` +
+      WHENS.map(wn => `<button class="s-chip s-when${it.when === wn ? " on" : ""}" onclick="setWhen(${i},'${wn}')">${wn.replace("歳","")}</button>`).join("") +
+      `</div><input type="text" class="memo-inp" value="${esc(it.memo || "")}" placeholder="メモ・参考URL(任意)" onchange="setMemo(${i}, this.value)"></div>`;
+  });
+  box.innerHTML = `<div class="stat">分類済み: ${doneN} / ${merged.length}</div>` + rows;
+}
+function setDiff(i, d) { merged[i].diff = merged[i].diff === d ? "" : d; saveMerged(); renderMerged(); }
+function setWhen(i, wn) { merged[i].when = merged[i].when === wn ? "" : wn; saveMerged(); renderMerged(); }
+let mOwner = "共通";
+function setMOwner(o) { mOwner = o; ["共通","夫","妻"].forEach(x => document.getElementById("mo_" + x).classList.toggle("on", x === o)); }
+function addMerged() {
+  const inp = document.getElementById("inpM");
+  const v = inp.value.trim();
+  if (!v) return;
+  merged.push({t: v, cat: "", own: mOwner, diff: "", when: "", cost: "", done: false, memo: ""});
+  inp.value = "";
+  saveMerged(); renderMerged();
+}
+function setCost(i, c) { merged[i].cost = merged[i].cost === c ? "" : c; saveMerged(); renderMerged(); }
+function delMerged(i) {
+  if (!confirm("「" + merged[i].t + "」を削除しますか?")) return;
+  merged.splice(i, 1);
+  saveMerged(); renderMerged();
+}
+function setMemo(i, v) { merged[i].memo = v.trim(); saveMerged(); }
+function linkify(t) { return t.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank">$1</a>'); }
+function toggleDone(i) { merged[i].done = !merged[i].done; saveMerged(); showTable(false); }
+
+function showTable(scroll) {
+  const area = document.getElementById("tableArea");
+  area.style.display = "";
+  const doneCnt = merged.filter(x => x.done).length;
+  let html = `<div class="stat">達成: ${doneCnt} / ${merged.length}</div>`;
+  let any = false;
+  for (const wn of WHENS.concat(["時期未定"])) {
+    const idx = merged.map((x, i) => i).filter(i => (merged[i].when || "時期未定") === wn);
+    if (!idx.length) continue;
+    any = true;
+    html += `<div class="bucket-group"><h4>${wn}</h4>` + idx.map(i => {
+      const it = merged[i];
+      return `<div class="b-row"><input type="checkbox" class="chk" ${it.done ? "checked" : ""} onchange="toggleDone(${i})">` +
+        `<span class="owner o-${it.own}">${it.own}</span>` +
+        (it.diff ? `<span class="diff-b d-${it.diff}">${it.diff}</span>` : "") +
+        (it.cost ? `<span class="diff-b cost-b">${it.cost}</span>` : "") +
+        (it.cat ? `<span class="cat-b c-${esc(it.cat)}">${esc(it.cat)}</span>` : "") +
+        `<span class="${it.done ? "done-t" : ""}">${esc(it.t)}</span></div>` +
+        (it.memo ? `<div class="memo-t">${linkify(esc(it.memo))}</div>` : "");
+    }).join("") + `</div>`;
+  }
+  document.getElementById("bucketTable").innerHTML = any ? html : "まだ何も分類されていません";
+  if (scroll !== false && area.scrollIntoView) area.scrollIntoView({behavior: "smooth"});
+}
+function buildTableText() {
+  let out = `【夫婦のタイムバケット】\n作成日: ${new Date().toLocaleDateString("ja-JP")}\n合計: ${merged.length}個\n`;
+  for (const wn of WHENS.concat(["時期未定"])) {
+    const list = merged.filter(x => (x.when || "時期未定") === wn);
+    if (!list.length) continue;
+    out += `\n■${wn}\n` + list.map(it => `${it.done ? "[済]" : "[ ]"} (${it.own}${it.diff ? "/" + it.diff : ""}${it.cost ? "/" + it.cost : ""}) ${it.cat ? "[" + it.cat + "] " : ""}${it.t}${it.memo ? "\n    メモ: " + it.memo : ""}`).join("\n") + "\n";
+  }
+  return out;
+}
+function copyTable() {
+  if (!merged.length) { alert("まだリストがありません"); return; }
+  copyText(buildTableText(), "copyBtn2");
+}
+function buildTSV() {
+  const head = "やりたいこと\tカテゴリ\t担当\t難易度\t金額\t時期\t達成\tメモ・URL";
+  return head + "\n" + merged.map(it =>
+    [it.t, it.cat || "", it.own, it.diff, it.cost, it.when, it.done ? "済" : "", it.memo || ""].join("\t")).join("\n");
+}
+function copyTSV() {
+  if (!merged.length) { alert("まだリストがありません"); return; }
+  copyText(buildTSV(), "copyBtn3");
+}
+
+buildChips();
+renderList();
+</script>
+</body>
+</html>
