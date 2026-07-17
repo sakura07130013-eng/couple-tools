@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#cd7d5e">
+<link rel="manifest" href="./manifest.json">
+<link rel="apple-touch-icon" href="./icon-192.png">
+<link rel="icon" type="image/png" href="./icon-192.png">
+<meta name="apple-mobile-web-app-title" content="価値観マップ">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>夫婦の価値観マップワーク</title>
+<style>
+  :root {
+    --bg: #faf6f0; --card: #ffffff; --text: #3d3a4e; --sub: #8a86a0;
+    --accent: #cd7d5e; --accent-light: #f3ddd3; --border: #eee7dd;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+    background: var(--bg); color: var(--text); line-height: 1.7;
+    min-height: 100vh; display: flex; flex-direction: column;
+  }
+  .wrap { max-width: 760px; width: 100%; margin: 0 auto; padding: 20px 20px 110px; flex: 1; }
+  .progress-track { height: 5px; background: var(--border); border-radius: 3px; margin-bottom: 6px; }
+  .progress-bar { height: 100%; background: var(--accent); border-radius: 3px; width: 0; transition: width .3s; }
+  .step-label { text-align: right; font-size: 12px; color: var(--sub); margin-bottom: 18px; }
+  h1 { font-size: 24px; margin-bottom: 20px; }
+  h2 { font-size: 20px; margin-bottom: 6px; }
+  .help { font-size: 13px; color: var(--sub); margin-bottom: 18px; }
+  .card {
+    background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+    padding: 14px 16px; margin-bottom: 12px;
+  }
+  .card h3 { font-size: 15px; margin-bottom: 4px; }
+  .card .req { color: var(--accent); font-size: 12px; margin-left: 4px; }
+  .card .note { font-size: 12px; color: var(--sub); margin-bottom: 10px; }
+  .opts { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 8px; }
+  .opts.col { flex-direction: column; align-items: flex-start; }
+  .opt {
+    display: inline-flex; align-items: center; gap: 7px; padding: 7px 13px;
+    border: 1.5px solid var(--border); border-radius: 18px; cursor: pointer;
+    font-size: 13.5px; transition: all .15s; background: #fff; white-space: nowrap;
+  }
+  .opt:hover { border-color: var(--accent); }
+  .opt.selected { border-color: var(--accent); background: var(--accent-light); }
+  .opt input { accent-color: var(--accent); width: 15px; height: 15px; flex-shrink: 0; }
+  textarea, select {
+    width: 100%; padding: 10px 12px; border: 1.5px solid var(--border); border-radius: 10px;
+    font-size: 14px; font-family: inherit; background: #fff; color: var(--text); margin-top: 10px;
+  }
+  textarea:focus, select:focus { outline: none; border-color: var(--accent); }
+  textarea { resize: vertical; min-height: 70px; }
+  ol.howto { padding-left: 20px; font-size: 14px; }
+  .footer {
+    position: fixed; bottom: 0; left: 0; right: 0; background: rgba(250,246,240,.95);
+    border-top: 1px solid var(--border); padding: 14px 20px;
+    display: flex; gap: 12px; justify-content: center;
+  }
+  button {
+    font-family: inherit; font-size: 15px; font-weight: 600; border: none;
+    border-radius: 24px; padding: 12px 36px; cursor: pointer; transition: opacity .15s;
+  }
+  button:hover { opacity: .85; }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-ghost { background: transparent; color: var(--sub); border: 1.5px solid var(--border); }
+  .error { color: #c0392b; font-size: 13px; margin-top: 8px; display: none; }
+  .summary-box {
+    background: #fff; border: 1.5px solid var(--border); border-radius: 12px;
+    padding: 16px; font-size: 12.5px; white-space: pre-wrap; max-height: 320px;
+    overflow-y: auto; margin: 14px 0; font-family: inherit;
+  }
+  .actions { display: flex; flex-direction: column; gap: 10px; }
+  .actions button, .actions a {
+    width: 100%; text-align: center; text-decoration: none; display: block;
+    font-size: 15px; font-weight: 600; border-radius: 24px; padding: 13px;
+  }
+  .a-mail { background: var(--accent); color: #fff; }
+  .a-copy { background: #fff; color: var(--accent); border: 1.5px solid var(--accent); }
+  .a-dl { background: transparent; color: var(--sub); border: 1.5px solid var(--border); font-weight: 400; font-size: 13px; }
+  .copied { background: #7daf7d !important; color: #fff !important; border-color: #7daf7d !important; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="progress-track"><div class="progress-bar" id="bar"></div></div>
+  <div class="step-label" id="stepLabel"></div>
+  <div id="screen"></div>
+</div>
+<div class="footer" id="footer">
+  <button class="btn-ghost" id="backBtn" onclick="goBack()" style="display:none">戻る</button>
+  <button class="btn-primary" id="nextBtn" onclick="goNext()">次へ</button>
+</div>
+
+<script>
+
+
+const COMMON = ["健康","夫婦仲","子ども","自由な時間・一人の時間","安定・穏やかな暮らし","旅行","仕事のやりがい","学び・成長・挑戦","親・親戚との関係","老後の安心","趣味","住まいの快適さ","食の楽しみ","貯金・資産形成","友人付き合い"];
+const FUAN = ["お金・貯蓄","自分の健康","相手の健康","仕事・収入","妊活・出産","子育て","親の介護","老後資金","住まい","特にない"];
+const MONEY = COMMON.concat(["車","家具","家電"]);
+
+// q types: radio / check(max) / select / text / selectFromPrev(参照qid)
+const SECTIONS = [
+  { title: "はじめに", intro: true },
+  { title: "あなたはどちら?", qs: [
+    { id:"who", type:"radio", title:"どちらの回答?", req:true, vertical:true, opts:["夫","妻"] }
+  ]},
+  { title: "1. 人生で大事にしたいもの", qs: [
+    { id:"life_pick", type:"check", max:5, title:"大事にしたいもの", note:"5つまで", req:true, opts:COMMON },
+    { id:"life_top", type:"selectFromPrev", from:"life_pick", title:"その中の1番はどれ?", req:true },
+    { id:"life_why", type:"text", title:"1番に選んだ理由を一言" }
+  ]},
+  { title: "2. 夫婦で大事にしたいこと", qs: [
+    { id:"fufu_val", type:"check", max:3, title:"夫婦関係で大事にしたいもの", note:"3つまで", req:true,
+      opts:["毎日の会話","信頼","お互いの自由","思いやり","感謝を言葉にする","スキンシップ","干渉しすぎない","ちゃんと話し合う","一緒に楽しむ"] },
+    { id:"fufu_do", type:"check", max:5, title:"夫婦で一緒にやりたいこと", note:"5つまで", req:true,
+      opts:["旅行","外食","散歩","勉強","資産形成","家づくり","子育て","趣味の共有","ゲーム","料理","友人との付き合い"] },
+    { id:"fufu_ideal", type:"text", title:"どんな夫婦でいたいか、一言" }
+  ]},
+  { title: "3. 時間の使い方", qs: [
+    { id:"time_holiday", type:"radio", title:"休日の「ふたり時間:一人時間」の理想", req:true,
+      opts:["ほぼ一緒","7:3","5:5","3:7","その日による"] },
+    { id:"time_weekday", type:"radio", title:"平日に最低限ほしい夫婦の時間", req:true,
+      opts:["夕食は一緒に","1日30分以上話す","できる限り一緒","特に決めなくていい"] },
+    { id:"time_friend", type:"radio", title:"友人との予定や泊まりの外出、相手にどうしてほしい?", req:true,
+      opts:["自由にどうぞ","事前に教えてほしい","事前に相談してほしい"] },
+    { id:"time_keep", type:"text", title:"「これだけは確保したい」時間を一言" }
+  ]},
+  { title: "4. すれ違い・ケンカのとき", qs: [
+    { id:"ken_self", type:"radio", title:"不満があるとき、自分はどうしがち?", req:true,
+      opts:["すぐ言葉にする","タイミングを見て言う","溜め込んでしまう","態度に出てしまう"] },
+    { id:"ken_want", type:"radio", title:"相手にはどう伝えてほしい?", req:true,
+      opts:["その場ですぐ","落ち着いてから言葉で","LINEや手紙でもOK"] },
+    { id:"ken_ng", type:"check", title:"ケンカ中にされたくないこと", note:"複数選択OK", req:true,
+      opts:["無視・沈黙","大声","過去を蒸し返す","途中で出ていく","人前で指摘","論破しようとする"] },
+    { id:"ken_limit", type:"radio", title:"仲直りのタイムリミットは?", req:true,
+      opts:["その日のうち","翌日までOK","冷却期間が必要なときもある"] }
+  ]},
+  { title: "5. お金の使い方", qs: [
+    { id:"money_spend", type:"check", max:5, title:"お金をかけたいもの", note:"5つまで", req:true, opts:MONEY },
+    { id:"money_save", type:"check", max:5, title:"節約してもいいもの", note:"5つまで", req:true, opts:MONEY },
+    { id:"money_type", type:"radio", title:"お金の使い方のタイプ、自分はどっちに近い?", req:true,
+      opts:["貯める安心感が大事","使う楽しみも大事","ちょうど中間"] }
+  ]},
+  { title: "6. お金の各論(車・旅行・住まい)", help:"生活の中で特に大きな出費になるものについて、今の考えを教えてください。", qs: [
+    { id:"trip_style", type:"check", max:2, title:"理想の旅行スタイル", note:"2つまで", req:true,
+      opts:["車で国内をまわる","電車・飛行機で国内","海外","温泉でのんびり","近場の小旅行を頻繁に"] },
+    { id:"trip_freq", type:"radio", title:"旅行の理想頻度", req:true,
+      opts:["年1回しっかり","年2〜3回","月1で小さく","こだわりなし"] },
+    { id:"car_future", type:"radio", title:"車、今後どうしたい?", req:true,
+      opts:["今のまま維持","小さめ・中古に替えてコストを抑える","手放してカーシェア・レンタカー","子どもの有無で決めたい"] },
+    { id:"car_cost", type:"radio", title:"車に年間かけていい金額(維持費込み)", req:true,
+      opts:["〜30万円","〜50万円","〜80万円","特に気にしない"] },
+    { id:"home_own", type:"radio", title:"住まいは賃貸?購入?", req:true,
+      opts:["ずっと賃貸","いずれ購入したい","状況次第・こだわりなし"] },
+    { id:"home_where", type:"radio", title:"将来どこに住みたい?", req:true,
+      opts:["今の生活圏","どちらかの実家の近く","都心寄り","郊外・地方","まだわからない"] }
+  ]},
+  { title: "7. 働き方について", qs: [
+    { id:"work_self", type:"radio", title:"自分の働き方、これからどうしたい?", req:true,
+      opts:["今のまま続けたい","いずれ変えたい","わからない"] },
+    { id:"work_how", type:"text", title:"「いずれ変えたい」を選んだ人:どう変えたい?一言" },
+    { id:"work_place", type:"check", max:2, title:"職場環境で重視したいこと", note:"2つまで", req:true,
+      opts:["給与・年収","通勤時間・勤務地","勤務時間・働き方","やりがい・仕事内容","キャリア・成長機会","雇用の安定性","福利厚生"] },
+    { id:"work_partner", type:"check", max:2, title:"相手の働き方に望むこと", note:"2つまで", req:true,
+      opts:["応援している","収入を上げてほしい","キャリアの成長を応援したい","本人に任せる","家族時間を重視してほしい","正社員でいてほしい","家事と両立できる工夫をしてほしい"] }
+  ]},
+  { title: "8. 子ども・妊活について", help:"※今の時点での気持ちでOK。", qs: [
+    { id:"kid_feel", type:"radio", title:"子どもについての今の気持ち", req:true,
+      opts:["ぜひほしい","できればほしい","自然に任せたい","迷っている"] },
+    { id:"kid_why", type:"check", max:3, title:"なぜ子どもが欲しいのか", note:"3つまで",
+      opts:["親になりたい","家族が増えるのが幸せ","社会的責任を感じている","二人だけでは物足りない","老後の支えになってほしい","子育てをしてみたい","親に孫を見せたい","世間体","自分の遺伝子を持った子を見てみたい","特に理由はない"] },
+    { id:"kid_when", type:"radio", title:"理想としては、いつまでに誕生していてほしい?",
+      opts:["できるだけ早く","1年後までに","39歳までに","40〜42歳までに","43歳〜45歳までに"] },
+    { id:"kid_treat", type:"radio", title:"妊活・不妊治療、どこまで考えられそう?(今の感覚で)",
+      opts:["タイミング法まで","人工授精まで","体外受精まで","やってみないとわからない"] },
+    { id:"kid_cost", type:"radio", title:"治療にかけられると思う費用(自己負担の総額)",
+      opts:["〜30万円","〜50万円","〜100万円","いくらでも(納得いくまで)"] },
+    { id:"kid_word", type:"text", title:"子どもがいる人生でも、いない人生でも、夫婦で大事にしたいことを一言" }
+  ]},
+  { title: "9. 将来の不安", qs: [
+    { id:"fuan_pick", type:"check", max:3, title:"不安に感じるもの", note:"3つまで", req:true, opts:FUAN },
+    { id:"fuan_top", type:"selectFromPrev", from:"fuan_pick", title:"一番大きい不安はどれ?", req:true },
+    { id:"fuan_how", type:"text", title:"その不安、どうすれば減りそう?一言" }
+  ]},
+  { title: "完了", done: true }
+];
+
+let step = 0;
+const answers = {};
+
+function render() {
+  const s = SECTIONS[step];
+  const total = SECTIONS.length - 1;
+  document.getElementById("bar").style.width = (step / total * 100) + "%";
+  document.getElementById("stepLabel").textContent =
+    s.intro ? "はじめに" : s.done ? "完了" : s.title;
+  const el = document.getElementById("screen");
+
+  if (s.intro) {
+    el.innerHTML = `
+      <h1>夫婦の価値観マップワーク</h1>
+      <div class="card"><h3>目的</h3>
+        <p style="font-size:14px">これから一緒の人生を歩んでいくにあたって、お互いが「何を大事にしたいか」を知るためのワークです。正解を決めるものではなく、違いがあってOK。今の気持ちで書いてください(あとから変わっても大丈夫)。</p>
+      </div>
+      <div class="card"><h3>進め方</h3>
+        <ol class="howto">
+          <li>それぞれ一人で書く(目安:30分)</li>
+          <li>回答は話し合いの当日まで、お互い見ない</li>
+          <li>その場で全部決めない。まずは知ることが目的</li>
+        </ol>
+      </div>`;
+  } else if (s.done) {
+    const text = buildSummary();
+    el.innerHTML = `
+      <h2>おつかれさまでした!</h2>
+      <div class="card" style="border-color: var(--accent); background: var(--accent-light);">
+        <h3>回答の送り方</h3>
+        <ol class="howto" style="margin-top:6px">
+          <li>下の「回答をコピーする」ボタンを押す</li>
+          <li>メール(またはLINE)に貼り付けて<br>パートナーに送る</li>
+        </ol>
+      </div>
+      <p class="help">話し合いの当日まで、お互いの回答は見ないルールです。</p>
+      <div class="summary-box" id="summaryBox">${escapeHtml(text)}</div>
+      <div class="actions">
+        <button class="a-mail" id="copyBtn" onclick="copySummary()">📋 回答をコピーする</button>
+        <button class="a-dl" onclick="downloadSummary()">コピーできない場合:テキストファイルで保存</button>
+      </div>`;
+    document.getElementById("footer").style.display = "none";
+    window.scrollTo(0, 0);
+    return;
+  } else {
+    let html = `<h2>${s.title}</h2>`;
+    if (s.help) html += `<p class="help">${s.help}</p>`;
+    for (const q of s.qs) html += renderQ(q);
+    el.innerHTML = html;
+    // 保存済み回答を復元
+    for (const q of s.qs) restoreQ(q);
+  }
+  document.getElementById("footer").style.display = "flex";
+  document.getElementById("backBtn").style.display = step > 0 ? "inline-block" : "none";
+  document.getElementById("nextBtn").textContent = (step === SECTIONS.length - 2) ? "完了する" : "次へ";
+  window.scrollTo(0, 0);
+}
+
+function renderQ(q) {
+  let inner = "";
+  if (q.type === "radio" || q.type === "check") {
+    const t = q.type === "radio" ? "radio" : "checkbox";
+    inner = `<div class="opts${q.vertical ? " col" : ""}">` + q.opts.map(o =>
+      `<label class="opt"><input type="${t}" name="${q.id}" value="${escapeHtml(o)}" onchange="onOpt('${q.id}', ${q.max || 0}, this)"><span>${escapeHtml(o)}</span></label>`
+    ).join("") + `</div>`;
+  } else if (q.type === "select") {
+    inner = `<select id="sel_${q.id}"><option value="">選択してください</option>` +
+      q.opts.map(o => `<option>${escapeHtml(o)}</option>`).join("") + `</select>`;
+  } else if (q.type === "selectFromPrev") {
+    const src = answers[q.from] || [];
+    inner = `<select id="sel_${q.id}"><option value="">選択してください</option>` +
+      src.map(o => `<option>${escapeHtml(o)}</option>`).join("") + `</select>`;
+  } else if (q.type === "text") {
+    inner = `<textarea id="txt_${q.id}" placeholder="自由に書いてください"></textarea>`;
+  }
+  return `<div class="card" id="card_${q.id}">
+    <h3>${escapeHtml(q.title)}${q.req ? '<span class="req">*必須</span>' : ""}</h3>
+    ${q.note ? `<div class="note">${q.note}</div>` : ""}
+    ${inner}
+    <div class="error" id="err_${q.id}">選択してください</div>
+  </div>`;
+}
+
+function restoreQ(q) {
+  const v = answers[q.id];
+  if (v === undefined) return;
+  if (q.type === "radio") {
+    const inp = document.querySelector(`input[name="${q.id}"][value="${cssEscape(v)}"]`);
+    if (inp) { inp.checked = true; inp.closest(".opt").classList.add("selected"); }
+  } else if (q.type === "check") {
+    for (const o of v) {
+      const inp = document.querySelector(`input[name="${q.id}"][value="${cssEscape(o)}"]`);
+      if (inp) { inp.checked = true; inp.closest(".opt").classList.add("selected"); }
+    }
+  } else if (q.type === "select" || q.type === "selectFromPrev") {
+    const sel = document.getElementById("sel_" + q.id);
+    if (sel) sel.value = v;
+  } else if (q.type === "text") {
+    const t = document.getElementById("txt_" + q.id);
+    if (t) t.value = v;
+  }
+}
+
+function onOpt(id, max, inp) {
+  if (inp.type === "checkbox" && max > 0) {
+    const checked = document.querySelectorAll(`input[name="${id}"]:checked`);
+    if (checked.length > max) { inp.checked = false; return; }
+  }
+  document.querySelectorAll(`input[name="${id}"]`).forEach(i =>
+    i.closest(".opt").classList.toggle("selected", i.checked));
+  updateDependents(id);
+}
+
+// チェック内容と連動して「その中の1番は?」の選択肢を更新
+function updateDependents(id) {
+  const s = SECTIONS[step];
+  if (!s.qs) return;
+  for (const q of s.qs) {
+    if (q.type !== "selectFromPrev" || q.from !== id) continue;
+    const sel = document.getElementById("sel_" + q.id);
+    if (!sel) continue;
+    const current = sel.value;
+    const picked = [...document.querySelectorAll(`input[name="${id}"]:checked`)].map(i => i.value);
+    sel.innerHTML = `<option value="">選択してください</option>` +
+      picked.map(o => `<option>${escapeHtml(o)}</option>`).join("");
+    if (picked.includes(current)) sel.value = current;
+  }
+}
+
+function collectAndValidate() {
+  const s = SECTIONS[step];
+  if (!s.qs) return true;
+  let ok = true;
+  for (const q of s.qs) {
+    let v;
+    if (q.type === "radio") {
+      const c = document.querySelector(`input[name="${q.id}"]:checked`);
+      v = c ? c.value : "";
+    } else if (q.type === "check") {
+      v = [...document.querySelectorAll(`input[name="${q.id}"]:checked`)].map(i => i.value);
+    } else if (q.type === "select" || q.type === "selectFromPrev") {
+      v = document.getElementById("sel_" + q.id).value;
+    } else {
+      v = document.getElementById("txt_" + q.id).value.trim();
+    }
+    answers[q.id] = v;
+    const empty = Array.isArray(v) ? v.length === 0 : !v;
+    const err = document.getElementById("err_" + q.id);
+    if (q.req && empty) {
+      ok = false;
+      err.style.display = "block";
+      document.getElementById("card_" + q.id).style.borderColor = "#c0392b";
+    } else if (err) {
+      err.style.display = "none";
+      document.getElementById("card_" + q.id).style.borderColor = "";
+    }
+  }
+  return ok;
+}
+
+function goNext() {
+  if (!collectAndValidate()) return;
+  step++;
+  render();
+}
+function goBack() { collectSilent(); step--; render(); }
+function collectSilent() {
+  const s = SECTIONS[step];
+  if (!s.qs) return;
+  for (const q of s.qs) {
+    if (q.type === "radio") {
+      const c = document.querySelector(`input[name="${q.id}"]:checked`);
+      if (c) answers[q.id] = c.value;
+    } else if (q.type === "check") {
+      answers[q.id] = [...document.querySelectorAll(`input[name="${q.id}"]:checked`)].map(i => i.value);
+    } else if (q.type === "select" || q.type === "selectFromPrev") {
+      answers[q.id] = document.getElementById("sel_" + q.id).value;
+    } else {
+      answers[q.id] = document.getElementById("txt_" + q.id).value.trim();
+    }
+  }
+}
+
+function fmt(v) { return Array.isArray(v) ? (v.length ? v.join(" / ") : "(未回答)") : (v || "(未回答)"); }
+
+function buildSummary() {
+  const a = answers;
+  return `【夫婦の価値観マップワーク 回答】
+回答者: ${fmt(a.who)}
+記入日: ${new Date().toLocaleDateString("ja-JP")}
+
+■1. 人生で大事にしたいもの
+・大事にしたいもの(5つまで): ${fmt(a.life_pick)}
+・その中の1番: ${fmt(a.life_top)}
+・1番に選んだ理由: ${fmt(a.life_why)}
+
+■2. 夫婦で大事にしたいこと
+・夫婦関係で大事にしたいもの: ${fmt(a.fufu_val)}
+・夫婦で一緒にやりたいこと: ${fmt(a.fufu_do)}
+・どんな夫婦でいたいか: ${fmt(a.fufu_ideal)}
+
+■3. 時間の使い方
+・休日の「ふたり時間:一人時間」: ${fmt(a.time_holiday)}
+・平日に最低限ほしい夫婦の時間: ${fmt(a.time_weekday)}
+・友人との予定や泊まりの外出: ${fmt(a.time_friend)}
+・これだけは確保したい時間: ${fmt(a.time_keep)}
+
+■4. すれ違い・ケンカのとき
+・不満があるとき自分は: ${fmt(a.ken_self)}
+・相手にはどう伝えてほしい: ${fmt(a.ken_want)}
+・ケンカ中にされたくないこと: ${fmt(a.ken_ng)}
+・仲直りのタイムリミット: ${fmt(a.ken_limit)}
+
+■5. お金の使い方
+・お金をかけたいもの: ${fmt(a.money_spend)}
+・節約してもいいもの: ${fmt(a.money_save)}
+・タイプ: ${fmt(a.money_type)}
+
+■6. お金の各論(車・旅行・住まい)
+・理想の旅行スタイル: ${fmt(a.trip_style)}
+・旅行の理想頻度: ${fmt(a.trip_freq)}
+・車、今後どうしたい: ${fmt(a.car_future)}
+・車に年間かけていい金額: ${fmt(a.car_cost)}
+・住まいは賃貸?購入?: ${fmt(a.home_own)}
+・将来どこに住みたい?: ${fmt(a.home_where)}
+
+■7. 働き方について
+・自分の働き方これからどうしたい: ${fmt(a.work_self)}
+・どう変えたい: ${fmt(a.work_how)}
+・職場環境で重視したいこと: ${fmt(a.work_place)}
+・相手の働き方に望むこと: ${fmt(a.work_partner)}
+
+■8. 子ども・妊活について
+・今の気持ち: ${fmt(a.kid_feel)}
+・なぜ子どもが欲しいのか: ${fmt(a.kid_why)}
+・いつまでに誕生していてほしい: ${fmt(a.kid_when)}
+・妊活・不妊治療どこまで: ${fmt(a.kid_treat)}
+・治療にかけられる費用: ${fmt(a.kid_cost)}
+・どちらの人生でも夫婦で大事にしたいこと: ${fmt(a.kid_word)}
+
+■9. 将来の不安
+・不安に感じるもの: ${fmt(a.fuan_pick)}
+・一番大きい不安: ${fmt(a.fuan_top)}
+・どうすれば減りそう: ${fmt(a.fuan_how)}`;
+}
+
+function copySummary() {
+  const text = buildSummary();
+  const done = () => {
+    const b = document.getElementById("copyBtn");
+    b.textContent = "✓ コピーしました";
+    b.classList.add("copied");
+    setTimeout(() => { b.textContent = "📋 回答をコピーする"; b.classList.remove("copied"); }, 2500);
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(done).catch(() => fallbackCopy(text, done));
+  } else fallbackCopy(text, done);
+}
+function fallbackCopy(text, done) {
+  const ta = document.createElement("textarea");
+  ta.value = text; document.body.appendChild(ta); ta.select();
+  document.execCommand("copy"); document.body.removeChild(ta); done();
+}
+function downloadSummary() {
+  const blob = new Blob([buildSummary()], { type: "text/plain;charset=utf-8" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `価値観マップ回答_${answers.who || ""}.txt`;
+  a.click();
+}
+function escapeHtml(s) {
+  return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+function cssEscape(s) { return String(s).replace(/["\\]/g, "\\$&"); }
+
+render();
+</script>
+</body>
+</html>
