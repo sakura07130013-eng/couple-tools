@@ -145,7 +145,7 @@
     <div class="autosave" id="saveNote"></div>
     <div style="margin-top:14px">
       <button class="a-btn a-copy" id="copyBtn" onclick="copyList()">📋 リストをコピーする</button>
-      <p class="send-note">コピーしたらメールかLINEで <b class="mailto-b"></b> へ。<br>ふたりで整理する日は、整理役のスマホの「②③」タブに貼り付けます</p>
+      <p class="send-note">コピーしたらメールかLINEでパートナーへ送ってください。<br>ふたりで整理する日は、整理役のスマホの「②③」タブに貼り付けます</p>
     </div>
   </div>
 
@@ -187,16 +187,14 @@
         <div id="bucketTable" class="card"></div>
         <button class="a-btn a-copy" id="copyBtn2" onclick="copyTable()">📋 バケット表をコピーする</button>
         <button class="a-btn a-sub" id="copyBtn3" onclick="copyTSV()">📄 スプシ用にコピー(貼り付けで表になります)</button>
-        <p class="send-note">コピーして <b class="mailto-b"></b> へ送れば、整理レポートも作れます</p>
+        <p class="send-note">コピーしてメールかLINEで共有すれば、整理レポートも作れます</p>
       </div>
     </div>
   </div>
 </div>
 
 <script>
-const MAIL_TO = new URLSearchParams(location.search).get("to") || "";
-const MAIL_TO_DISP = MAIL_TO || "ふたりで決めた送り先";
-document.addEventListener("DOMContentLoaded", () => { document.querySelectorAll(".mailto-b").forEach(el => el.textContent = MAIL_TO_DISP); });
+
 const CATS = {
   "行きたい場所": "例: 一度は見たい絶景 / 行ってみたい国・県 / 泊まりたい宿",
   "食べたい": "例: 憧れの名店 / ご当地グルメ / 高級食材を家で",

@@ -93,8 +93,7 @@
 </div>
 
 <script>
-const MAIL_TO = new URLSearchParams(location.search).get("to") || "";
-const MAIL_TO_DISP = MAIL_TO || "ふたりで決めた送り先";
+
 
 const COMMON = ["健康","夫婦仲","子ども","自由な時間・一人の時間","安定・穏やかな暮らし","旅行","仕事のやりがい","学び・成長・挑戦","親・親戚との関係","老後の安心","趣味","住まいの快適さ","食の楽しみ","貯金・資産形成","友人付き合い"];
 const FUAN = ["お金・貯蓄","自分の健康","相手の健康","仕事・収入","妊活・出産","子育て","親の介護","老後資金","住まい","特にない"];
@@ -219,7 +218,7 @@ function render() {
         <h3>回答の送り方</h3>
         <ol class="howto" style="margin-top:6px">
           <li>下の「回答をコピーする」ボタンを押す</li>
-          <li>メール(またはLINE)に貼り付けて<br><strong>${MAIL_TO_DISP}</strong> 宛てに送る</li>
+          <li>メール(またはLINE)に貼り付けて<br>パートナーに送る</li>
         </ol>
       </div>
       <p class="help">話し合いの当日まで、お互いの回答は見ないルールです。</p>
