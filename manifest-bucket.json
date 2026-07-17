@@ -1,0 +1,20 @@
+{
+ "name": "夫婦のタイムバケット",
+ "short_name": "タイムバケット",
+ "start_url": "./bucket.html",
+ "display": "standalone",
+ "background_color": "#faf6f0",
+ "theme_color": "#5e86ae",
+ "icons": [
+  {
+   "src": "./icon-bucket-192.png",
+   "sizes": "192x192",
+   "type": "image/png"
+  },
+  {
+   "src": "./icon-bucket-512.png",
+   "sizes": "512x512",
+   "type": "image/png"
+  }
+ ]
+}
